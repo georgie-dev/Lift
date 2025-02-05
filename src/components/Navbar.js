@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react/no-unescaped-entities */
 import Image from "next/image";
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "./data/authProvider";
 import { CiMenuFries } from "react-icons/ci";
 import Link from "next/link";
@@ -14,16 +14,19 @@ const Navbar = () => {
   const [dark, setDark] = useState(false);
   const { user, logout, setactiveMenu, activeMenu } = useAuth();
   const router = useRouter();
-  
-  useEffect(() => {
-    const theme = document.body.classList;
-    setDark(theme.contains("dark"))
-  }, [])
-  
 
-  const darkMode = (e) => {
-    document.body.classList.toggle("dark")
-    setDark((prev)=> !prev)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const theme = document.body.classList;
+      setDark(theme.contains("dark"));
+    }
+  }, []);
+
+  const darkMode = () => {
+    if (typeof window !== "undefined") {
+      document.body.classList.toggle("dark");
+      setDark((prev) => !prev);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -41,12 +44,10 @@ const Navbar = () => {
   return (
     user && (
       <div className="bg-white dark:bg-zinc-400 sticky top-0 z-20 m-0">
-        <div className=" box-border m-5 shadow-sm mx-auto px-8 py-2 flex gap-10 md:gap-0 items-center md:-start justify-between w-full h-auto">
+        <div className="box-border m-5 shadow-sm mx-auto px-8 py-2 flex gap-10 md:gap-0 items-center md:-start justify-between w-full h-auto">
           <div
             className="block w-fit lg:hidden text-button-blue"
-            onClick={() => {
-              setactiveMenu((previousMenu) => !previousMenu);
-            }}
+            onClick={() => setactiveMenu((prev) => !prev)}
           >
             {activeMenu ? <IoMdClose /> : <CiMenuFries />}
           </div>
@@ -61,11 +62,10 @@ const Navbar = () => {
           <div className="w-fit flex items-center text-black gap-2">
             <button
               type="button"
-              className=" relative rounded-full p-3 text-xl hover:bg-light-gray"
+              className="relative rounded-full p-3 text-xl hover:bg-light-gray"
               onClick={darkMode}
             >
               <span className="absolute rounded-full inline-flex h-2 w-2 right-2 top-2" />
-
               {dark ? <MdOutlineLightMode /> : <MdOutlineDarkMode />}
             </button>
             <div className="relative block">
