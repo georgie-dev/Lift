@@ -23,6 +23,14 @@ const LiveSession = () => {
   const router = useRouter();
   const meetingContainerRef = useRef(null);
 
+  const [fullUrl, setFullUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setFullUrl(window.location.href);
+    }
+  }, []);
+
   useEffect(() => {
     if (start && meetingContainerRef.current && typeof window !== "undefined") {
       const appID = process.env.NEXT_PUBLIC_APP_ID;
@@ -51,7 +59,7 @@ const LiveSession = () => {
         },
         sharedLinks: [
           {
-            url: `${window.location.origin}${window.location.pathname}?roomID=${roomID}`,
+            url: `${fullUrl}?roomID=${roomID}`,
           },
         ],
         showRoomTimer: true,
@@ -61,7 +69,8 @@ const LiveSession = () => {
         },
       });
     }
-  }, [start, user, roomID, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start, user, roomID, fullUrl]);
 
   return (
     <div className="flex flex-col gap-8 relative">
