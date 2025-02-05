@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { RiLiveLine } from "react-icons/ri";
 import { useAuth } from "@/components/data/authProvider";
@@ -8,7 +9,7 @@ import { useRouter } from "next/navigation";
 function randomID(len = 5) {
   let result = "";
   const chars =
-    process.env.NEXT_PUBLIC_CHAR || "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; // Fallback
+    "12345qwertyuiopasdfgh67890jklmnbvcxzMNBVCZXASDQWERTYHGFUIOLKJP";
   const maxPos = chars.length;
   for (let i = 0; i < len; i++) {
     result += chars.charAt(Math.floor(Math.random() * maxPos));
@@ -36,17 +37,19 @@ const LiveSession = () => {
       const appID = process.env.NEXT_PUBLIC_APP_ID;
       const serverSecret = process.env.NEXT_PUBLIC_SERVER_SECRET;
       if (!appID || !serverSecret) {
-        console.error("Missing ZegoCloud credentials in environment variables.");
+        console.error(
+          "Missing ZegoCloud credentials in environment variables."
+        );
         return;
       }
 
       const userID = randomID(5);
       const userName = user?.displayName || "Guest";
       const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-        parseInt(appID), 
-        serverSecret, 
-        roomID, 
-        userID, 
+        parseInt(appID),
+        serverSecret,
+        roomID,
+        userID,
         userName
       );
 
@@ -69,7 +72,7 @@ const LiveSession = () => {
         },
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start, user, roomID, fullUrl]);
 
   return (
@@ -100,4 +103,4 @@ const LiveSession = () => {
   );
 };
 
-export default LiveSession;
+export default dynamic(() => Promise.resolve(LiveSession), { ssr: false });
