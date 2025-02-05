@@ -1,10 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { RiLiveLine } from "react-icons/ri";
 import { useAuth } from "@/components/data/authProvider";
 import { useRouter } from "next/navigation";
+
+// Dynamically import ZegoUIKitPrebuilt to avoid SSR issues
+const ZegoUIKitPrebuilt = dynamic(
+  () => import("@zegocloud/zego-uikit-prebuilt").then(mod => mod.ZegoUIKitPrebuilt),
+  { ssr: false }
+);
 
 function randomID(len = 5) {
   let result = "";
@@ -23,57 +28,74 @@ const LiveSession = () => {
   const roomID = user?.uid;
   const router = useRouter();
   const meetingContainerRef = useRef(null);
-
   const [fullUrl, setFullUrl] = useState("");
+  const [zegoInitialized, setZegoInitialized] = useState(false);
 
+  // Handle URL setting
   useEffect(() => {
     if (typeof window !== "undefined") {
       setFullUrl(window.location.href);
     }
   }, []);
 
+  // Handle Zego initialization
   useEffect(() => {
-    if (start && meetingContainerRef.current && typeof window !== "undefined") {
-      const appID = process.env.NEXT_PUBLIC_APP_ID;
-      const serverSecret = process.env.NEXT_PUBLIC_SERVER_SECRET;
-      if (!appID || !serverSecret) {
-        console.error(
-          "Missing ZegoCloud credentials in environment variables."
-        );
-        return;
+    const initializeZego = async () => {
+      if (
+        start &&
+        meetingContainerRef.current &&
+        typeof window !== "undefined" &&
+        !zegoInitialized &&
+        ZegoUIKitPrebuilt
+      ) {
+        try {
+          const appID = process.env.NEXT_PUBLIC_APP_ID;
+          const serverSecret = process.env.NEXT_PUBLIC_SERVER_SECRET;
+          
+          if (!appID || !serverSecret) {
+            console.error("Missing ZegoCloud credentials in environment variables.");
+            return;
+          }
+
+          const userID = randomID(5);
+          const userName = user?.displayName || "Guest";
+          
+          const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+            parseInt(appID),
+            serverSecret,
+            roomID,
+            userID,
+            userName
+          );
+
+          const zp = ZegoUIKitPrebuilt.create(kitToken);
+
+          await zp.joinRoom({
+            container: meetingContainerRef.current,
+            scenario: {
+              mode: ZegoUIKitPrebuilt.VideoConference,
+            },
+            sharedLinks: [
+              {
+                url: `${fullUrl}?roomID=${roomID}`,
+              },
+            ],
+            showRoomTimer: true,
+            showLeavingView: true,
+            onLeaveRoom: () => {
+              router.push("/home");
+            },
+          });
+
+          setZegoInitialized(true);
+        } catch (error) {
+          console.error("Failed to initialize Zego:", error);
+        }
       }
+    };
 
-      const userID = randomID(5);
-      const userName = user?.displayName || "Guest";
-      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-        parseInt(appID),
-        serverSecret,
-        roomID,
-        userID,
-        userName
-      );
-
-      const zp = ZegoUIKitPrebuilt.create(kitToken);
-
-      zp.joinRoom({
-        container: meetingContainerRef.current,
-        scenario: {
-          mode: ZegoUIKitPrebuilt.VideoConference,
-        },
-        sharedLinks: [
-          {
-            url: `${fullUrl}?roomID=${roomID}`,
-          },
-        ],
-        showRoomTimer: true,
-        showLeavingView: true,
-        onLeaveRoom: () => {
-          router.push("/home");
-        },
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [start, user, roomID, fullUrl]);
+    initializeZego();
+  }, [start, user, roomID, fullUrl, router, zegoInitialized]);
 
   return (
     <div className="flex flex-col gap-8 relative">
