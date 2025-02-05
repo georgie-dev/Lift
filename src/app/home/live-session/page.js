@@ -25,38 +25,44 @@ const LiveSession = () => {
   const roomID = user?.uid
   const router = useRouter()
 
-  const myMeeting = (element) => {
-    // generate Kit Token
-    const appID = process.env.NEXT_PUBLIC_APP_ID ;
-    const serverSecret = process.env.NEXT_PUBLIC_SERVER_SECRET ;
-    const userID = randomID(5);
-    const userName = user?.displayName;
-    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-      appID,
-      serverSecret,
-      roomID,
-      userID,
-      userName
-    );
+const myMeeting = (element) => {
+  if (!element) return; 
+  if (typeof window === "undefined") return;
 
-    // Create instance object from Kit Token.
-    const zp = ZegoUIKitPrebuilt.create(kitToken);
-    // start the call
-    zp.joinRoom({
-      container: element,
-      scenario: {
-        mode: ZegoUIKitPrebuilt.VideoConference,
+  // Generate Kit Token
+  const appID = process.env.NEXT_PUBLIC_APP_ID;
+  const serverSecret = process.env.NEXT_PUBLIC_SERVER_SECRET;
+  const userID = randomID(5);
+  const userName = user?.displayName;
+  const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+    appID,
+    serverSecret,
+    roomID,
+    userID,
+    userName
+  );
+
+  const zp = ZegoUIKitPrebuilt.create(kitToken);
+  
+  // Start the call
+  zp.joinRoom({
+    container: element,
+    scenario: {
+      mode: ZegoUIKitPrebuilt.VideoConference,
+    },
+    sharedLinks: [
+      {
+        url: `${window.location.origin}${window.location.pathname}?roomID=${roomID}`,
       },
-      sharedLinks: [{
-        url: window.location.origin + window.location.pathname + '?roomID=' + roomID,
-    }],
-      showRoomTimer: true,
-      showLeavingView: true,
-      onLeaveRoom: () => {
-        router.push('/home')
-      },
-    });
-  };
+    ],
+    showRoomTimer: true,
+    showLeavingView: true,
+    onLeaveRoom: () => {
+      router.push("/home");
+    },
+  });
+};
+
 
   return (
     <div className="flex flex-col gap-8 relative">
